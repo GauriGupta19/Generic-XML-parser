@@ -75,29 +75,43 @@ def data_xml(root, sheet_attrib):
     for i in keyList: 
         dictionary[i] = 'None'
 #     print(dictionary)    
+
 #     Adding data to the dictionary
     for i in range(n):
+        print(i)
         if i>0:
             currNode = root[0][i]
             try:    
                 if dictionary[column_name(currNode.attrib[sheet_attrib])] == 'None':
-#                     print('empty' + currNode.attrib[sheet_attrib])
                     columns = []
+                    header_columns = []
                     values = []
                     for key in currNode.attrib:
                         if key == sheet_attrib:
                             continue
                         else:
+                            header_columns = header_columns + [key]
                             columns = columns + [key]
                             values = values + [currNode.attrib[key]]
+                            
                     for j in range(total_entries(root[0][i])):
-#                         print('yes')
-                        if(currNode[j].tag == 'p' or currNode[j].tag == '{raml21.xsd}p'):
-                            columns = columns + [currNode[j].attrib['name']]
-                            values = values + [currNode[j].text]
-                        elif (currNode[j].tag == 'list' or currNode[j].tag == '{raml21.xsd}list'):
-                            columns = columns + [currNode[j].attrib['name']]
-                            values = values + [entry_list(currNode[j])]
+                        s = currNode[j].tag
+                        
+#                         If the header column and the child column match, we use the value of the child and overwrite the header and the flag is set to be True so that the default code does not run.
+                        flag = False
+                        for k in range(len(header_columns)):
+                            if(header_columns[k] == currNode[j].attrib['name']):
+                                values[k] = currNode[j].text
+                                flag = True
+                                print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
+                            
+                        if(flag == False):
+                            if(s[-1] == 'p'):
+                                columns = columns + [currNode[j].attrib['name']]
+                                values = values + [currNode[j].text]
+                            elif (s[-4:] == 'list' ):
+                                columns = columns + [currNode[j].attrib['name']]
+                                values = values + [entry_list(currNode[j])]
 
                     df = pd.DataFrame([values], columns = columns)
                     dictionary[column_name(currNode.attrib[sheet_attrib])] = df
@@ -105,26 +119,41 @@ def data_xml(root, sheet_attrib):
 #                     print((dictionary))
             except:
 #                 print('filled' + root[0][i].attrib[sheet_attrib])
+                header_columns = []
                 columns = []
                 values = []
                 for key in currNode.attrib:
                     if key == sheet_attrib:
                         continue
                     else:
+                        header_columns = header_columns + [key]
                         columns = columns + [key]
                         values = values + [currNode.attrib[key]]                    
                 for j in range(total_entries(root[0][i])):
-                    if(currNode[j].tag == 'p' or currNode[j].tag == '{raml21.xsd}p'):
-                        columns = columns + [currNode[j].attrib['name']]
-                        values = values + [currNode[j].text]
-                    elif (currNode[j].tag == 'list' or currNode[j].tag == '{raml21.xsd}list'):
-                        columns = columns + [currNode[j].attrib['name']]
-                        values = values + [entry_list(currNode[j])]
+                    s = currNode[j].tag
+                    
+#                         If the header column and the child column match, we use the value of the child and overwrite the header and the flag is set to be True so that the default code does not run.
+                    flag = False
+                    for k in range(len(header_columns)):
+                            if(header_columns[k] == currNode[j].attrib['name']):
+                                values[k] = currNode[j].text
+                                flag = True
+                                print('$$$$$$$$$$$$$$$$$$$$$$')
+                    
+                    if(flag == False):
+                        if(s[-1] == 'p'):
+                            columns = columns + [currNode[j].attrib['name']]
+                            values = values + [currNode[j].text]
+                        elif (s[-4:] == 'list' ):
+                            columns = columns + [currNode[j].attrib['name']]
+                            values = values + [entry_list(currNode[j])]
                                                
                 df = pd.DataFrame([values], columns = columns)
+#                 print(df)
                 dictionary[column_name(currNode.attrib[sheet_attrib])] = dictionary[column_name(currNode.attrib[sheet_attrib])].append(df)
 #                 print(total_entries(currNode)) 
 #                 print((dictionary))
+
     return excel_name(dictionary)
 
 # Converts an input xml file to output xlsx file given the sheet attribute for creating sheets in xlsx
